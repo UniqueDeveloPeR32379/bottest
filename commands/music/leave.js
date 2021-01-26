@@ -1,29 +1,33 @@
 module.exports = {
     config: {
-        name: 'join',
-        aliases: ['joinvc'],
+        name: 'leave',
+        aliases: ['stop', 'dc'],
         category: 'music',
-        description: 'Join The User\'s VC',
+        description: 'Leaves The User\'s VC',
         usage: ' ',
         accessableby: 'everyone'
     },
     run: async (bot, message, args, ops) => {
         const { channel } = message.member.voice;
         const serverQueue = ops.queue.get(message.guild.id);
-      try {
+try {
         if (!channel) return message.channel.send('**You Need To Join A Voice Channel!**');
         if (!channel.permissionsFor(bot.user).has(['CONNECT', 'SPEAK', 'VIEW_CHANNEL'])) {
             return message.channel.send("**Missing Voice Permissions!**");
         };
-        if (message.guild.me.voice.channel) return message.channel.send('❌ **Bot is Already In The VC!**');
-      
+        if (!message.guild.me.voice.channel) return message.channel.send('❌ **Bot is Not In A VC!**');
+
         if (serverQueue || serverQueue.playing) {
-          return message.channel.send("**Cannot Join Another VC While Playing!**")
+          serverQueue.connection.dispatcher.end();
+          await channel.leave();
+          return message.channel.send("**✅ Left The Voice Channel!**");
+        } else {
+        await channel.leave();
+        return message.channel.send("**✅ Left The Voice Channel!**");
         }
-        await channel.join();
-        return message.channel.send("**✅ Joined The Voice Channel!**")
       } catch {
           serverQueue.connection.dispatcher.end();
+          await channel.leave();
           return message.channel.send("**Something Went Wrong, Please Try Again!**");
       }
     }
